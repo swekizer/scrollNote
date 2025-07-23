@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 250px; padding: 15px; }
+    input, button { width: 100%; margin: 5px 0; padding: 8px; }
+    .auth-form { display: block; }
+    .user-section { display: none; }
+  </style>
+</head>
+<body>
+  <h3>scrollNote</h3>
+  
+  <div id="authForm" class="auth-form">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="signIn">Sign In</button>
+    <button id="signUp">Sign Up</button>
+  </div>
+  
+  <div id="userSection" class="user-section">
+    <p id="userEmail"></p>
+    <button id="viewSnaps">View My Snaps</button>
+    <button id="signOut">Sign Out</button>
+  </div>
+  
+  <script src="supabase-config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+#signIn {
+    display: block;
+    margin: 0 auto;
+}
+
+.auth-form {
+    max-width: 400px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#signIn {
+    background: #007cba;
+    color: white;
+}
+
+#signUp {
+    background: #28a745;
+    color: white;
+}
+
+.user-info {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+}
+
+#signOut {
+    margin-left: 10px;
+    padding: 5px 15px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.snaps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.snap {
+    margin-bottom: 0;
+}
+
+.snap-header {
+    padding: 15px;
+    background: #007cba;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.snap-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.snap-date {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.snap-content {
+    padding: 15px;
+    display: flex;
+    gap: 15px;
+}
+
+.snap-image {
+    width: 200px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.snap-details {
+    flex: 1;
+}
+
+.snap-details p {
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.snap-details strong {
+    color: #333;
+}
+
+.snap-details a {
+    color: #007cba;
+    word-break: break-all;
+}
+
+/* Modal styles for enlarged image */
+.image-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.image-modal-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.3);
+    background: white;
+    padding: 8px;
+}
+.image-modal-overlay {
+    cursor: zoom-out;
+}

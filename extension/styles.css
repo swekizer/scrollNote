@@ -1,0 +1,42 @@
+.scrollnote-save-btn {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  
+  .scrollnote-input {
+    background: white;
+    border: 2px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .scrollnote-input textarea {
+    width: 250px;
+    height: 80px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    resize: none;
+  }
+  
+  .scrollnote-input button {
+    margin: 5px;
+    padding: 5px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .scrollnote-input button:first-of-type {
+    background: #007cba;
+    color: white;
+  }
+  
+  .scrollnote-input button:last-of-type {
+    background: #ccc;
+  }
