@@ -39,13 +39,13 @@ scrollNote/
 
 ## Setup Instruction
 
-Refer to setup.md.
+Refer to setup.md
 
 ## How to Use
 
 ### First Time Setup
 
-1. **Sign Up**: Click the scrollNote extension icon in Chrome and create an account
+1. **Sign Up**: Click the scrollNote extension icon in Chrome and create an account. You will receive a email verification email on your email id from supabase.
 2. **Sign In**: Use your credentials to sign in to the extension
 
 ### Capturing Snaps
@@ -84,7 +84,6 @@ Refer to setup.md.
 
 - Chrome Extensions API (Manifest V3)
 - Supabase (Database + Authentication + Storage)
-- Backend (Node.js and Express.js)
 - Frontend (HTML + CSS + Vanilla JavaScript)
 
 ## Troubleshooting
