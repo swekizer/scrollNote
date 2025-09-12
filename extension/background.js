@@ -3,7 +3,7 @@ importScripts('api-config.js');
 async function uploadScreenshotToBackend(base64Data, userEmail, userToken) {
   const fileName = `snap_${Date.now()}_${Math.floor(Math.random()*10000)}.png`;
   
-  const uploadRes = await fetch(`${API_URL}/storage/upload`, {
+  const uploadRes = await fetch(`${API_URL}/api/storage/upload`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ async function saveToBackend(data, sender) {
       delete data.screenshotError;
     }
 
-    const response = await fetch(`${API_URL}/snaps`, {
+    const response = await fetch(`${API_URL}/api/snaps`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

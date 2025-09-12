@@ -5,7 +5,7 @@ document.getElementById('signIn').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${API_URL}/auth/signin`, {
+    const response = await fetch(`${API_URL}/api/auth/signin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -36,7 +36,7 @@ document.getElementById('signUp').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${API_URL}/auth/signup`, {
+    const response = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -15,7 +15,7 @@ document.getElementById('signIn').onclick = async function() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/auth/signin`, {
+        const response = await fetch(`${API_URL}/api/auth/signin`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -100,7 +100,7 @@ async function loadSnaps() {
     if (!currentUser) return;
     
     try {
-        const response = await fetch(`${API_URL}/snaps?email=${encodeURIComponent(currentUser.email)}`, {
+        const response = await fetch(`${API_URL}/api/snaps?email=${encodeURIComponent(currentUser.email)}`, {
             headers: {
                 'Authorization': `Bearer ${currentUser.token}`
             }
