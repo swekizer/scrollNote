@@ -60,8 +60,8 @@ document.getElementById('signUp').onclick = async function() {
 };
 
 document.getElementById('viewSnaps').onclick = function() {
-  // Update this URL to your deployed website URL when in production
-  chrome.tabs.create({url: 'http://localhost:3000/website/index.html'});
+  // Using the deployed website URL for production
+  chrome.tabs.create({url: 'https://scrollnote-home.onrender.com'});
 };
 
 document.getElementById('signOut').onclick = function() {
