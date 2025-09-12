@@ -5,26 +5,27 @@ document.getElementById('signIn').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    const response = await fetch(`${API_URL}/auth/signin`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ email, password })
     });
     
     const data = await response.json();
     
-    if (data.access_token) {
+    if (data.user && data.user.token) {
       chrome.storage.local.set({
-        user: { email, token: data.access_token }
+        user: data.user
       });
       showUserSection(email);
+    } else if (data.message) {
+      alert(`Sign in failed: ${data.message}`);
     }
   } catch (error) {
     console.error('Sign in error:', error);
+    alert('An error occurred during sign in');
   }
 };
 
@@ -35,27 +36,31 @@ document.getElementById('signUp').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    const response = await fetch(`${API_URL}/auth/signup`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ email, password })
     });
     
     const data = await response.json();
     
-    if (data.access_token || data.user) {
+    if (data.success) {
       alert('Sign up successful! Please sign in.');
+    } else if (data.message) {
+      alert(`Sign up failed: ${data.message}`);
+    } else {
+      alert('Sign up failed. Please try again.');
     }
   } catch (error) {
     console.error('Sign up error:', error);
+    alert('An error occurred during sign up');
   }
 };
 
 document.getElementById('viewSnaps').onclick = function() {
+  // Update this URL to your deployed website URL when in production
   chrome.tabs.create({url: 'http://localhost:3000/website/index.html'});
 };
 

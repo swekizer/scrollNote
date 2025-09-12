@@ -1,27 +1,19 @@
-importScripts('supabase-config.js');
+importScripts('api-config.js');
 
-async function uploadScreenshotToSupabase(base64Data, userEmail, userToken) {
-  // Convert base64 to Blob
-  function base64ToBlob(base64, type = 'image/png') {
-    const byteCharacters = atob(base64.split(',')[1]);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type });
-  }
-
+async function uploadScreenshotToBackend(base64Data, userEmail, userToken) {
   const fileName = `snap_${Date.now()}_${Math.floor(Math.random()*10000)}.png`;
-  const blob = base64ToBlob(base64Data);
-
-  const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/screenshots/${userEmail}/${fileName}`, {
+  
+  const uploadRes = await fetch(`${API_URL}/storage/upload`, {
     method: 'POST',
     headers: {
-      'apikey': SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${userToken}`
     },
-    body: blob
+    body: JSON.stringify({
+      fileData: base64Data,
+      fileName: fileName,
+      userEmail: userEmail
+    })
   });
 
   if (!uploadRes.ok) {
@@ -29,8 +21,8 @@ async function uploadScreenshotToSupabase(base64Data, userEmail, userToken) {
     throw new Error('Failed to upload screenshot: ' + errorText);
   }
 
-  // Construct public URL (assuming bucket is public)
-  return `${SUPABASE_URL}/storage/v1/object/public/screenshots/${userEmail}/${fileName}`;
+  const result = await uploadRes.json();
+  return result.fileUrl;
 }
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -91,7 +83,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
 });
 
-async function saveToSupabase(data, sender) {
+async function saveToBackend(data, sender) {
   let success = false;
   let errorMsg = '';
   try {
@@ -99,10 +91,10 @@ async function saveToSupabase(data, sender) {
     if (!userStorage.user) throw new Error('User not authenticated');
     data.user_email = userStorage.user.email;
 
-    // If screenshot is present, upload to Supabase Storage and use the URL
+    // If screenshot is present, upload to backend and use the URL
     if (data.screenshot) {
       try {
-        const url = await uploadScreenshotToSupabase(data.screenshot, data.user_email, userStorage.user.token);
+        const url = await uploadScreenshotToBackend(data.screenshot, data.user_email, userStorage.user.token);
         data.screenshot = url;
       } catch (uploadErr) {
         console.error('Screenshot upload failed:', uploadErr);
@@ -110,16 +102,15 @@ async function saveToSupabase(data, sender) {
       }
     }
 
-    // Remove screenshotError before saving to Supabase
+    // Remove screenshotError before saving to backend
     if ('screenshotError' in data) {
       delete data.screenshotError;
     }
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/snaps`, {
+    const response = await fetch(`${API_URL}/snaps`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${userStorage.user.token}`
       },
       body: JSON.stringify(data)

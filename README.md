@@ -10,6 +10,19 @@ A Chrome extension that allows you to capture text selections along with screens
 - ☁️ Cloud storage with Supabase backend
 - 🔐 User authentication and personal data management
 - 🌐 Web interface to view all your saved snaps
+- 🔒 Secure backend architecture with protected API keys
+
+## Project Architecture
+
+The project consists of three main components:
+
+1. **Chrome Extension**: Captures text selections and screenshots from web pages
+2. **Website**: Displays saved snaps and manages user authentication
+3. **Backend**: Securely handles API requests to Supabase for data storage and authentication
+
+### Security Improvements
+
+The original implementation had Supabase credentials exposed in the frontend code. The new architecture moves all Supabase interactions to a secure backend server, protecting the API keys and providing a more robust security model.
 
 ## Project Structure
 
@@ -18,16 +31,24 @@ scrollNote/
 ├── extension/
 │   ├── manifest.json          # Chrome extension manifest
 │   ├── background.js          # Background service worker
-│   ├── content.js            # Content script for text selection
-│   ├── popup.html            # Extension popup interface
-│   ├── popup.js              # Popup functionality
-│   ├── styles.css            # Extension styling
-│   └── supabase-config.js    # Supabase configuration
+│   ├── content.js             # Content script for text selection
+│   ├── popup.html             # Extension popup interface
+│   ├── popup.js               # Popup functionality
+│   ├── styles.css             # Extension styling
+│   └── api-config.js          # Backend API configuration
 ├── website/
-│   ├── index.html            # Web app to view snaps
-│   ├── script.js             # Web app functionality
-│   ├── styles.css            # Web app styling
-│   └── supabase-config.js    # Supabase configuration
+│   ├── index.html             # Web app to view snaps
+│   ├── script.js              # Web app functionality
+│   ├── styles.css             # Web app styling
+│   ├── api-config.js          # Backend API configuration
+│   └── vercel.json            # Vercel deployment configuration
+├── backend/
+│   ├── server.js              # Main server file
+│   ├── routes/                # API route handlers
+│   ├── services/              # Service layer for external APIs
+│   ├── middleware/            # Express middleware
+│   ├── .env.example           # Environment variables template
+│   └── render.yaml            # Render deployment configuration
 └── README.md
 ```
 
@@ -35,11 +56,81 @@ scrollNote/
 
 - Google Chrome browser
 - Supabase account (free tier available)
+- Node.js and npm installed
 - Basic knowledge of Chrome extension installation
 
-## Setup Instruction
+## Setup and Development
 
-Refer to setup.md
+### Backend
+
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Create a `.env` file based on `.env.example` and add your Supabase credentials.
+
+4. Start the development server:
+   ```
+   npm run dev
+   ```
+
+### Website
+
+1. Update the `api-config.js` file with your backend URL.
+
+2. Serve the website using a local server:
+   ```
+   npx serve website
+   ```
+
+### Extension
+
+1. Update the `api-config.js` file with your backend URL.
+
+2. Load the extension in Chrome:
+   - Open Chrome and navigate to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select the `extension` directory
+
+## Deployment
+
+### Backend (Render)
+
+1. Create a new Web Service on Render.
+2. Connect your GitHub repository.
+3. Configure the service:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Add environment variables from your `.env` file
+
+### Website (Vercel)
+
+1. Install Vercel CLI:
+   ```
+   npm install -g vercel
+   ```
+
+2. Deploy to Vercel:
+   ```
+   cd website
+   vercel
+   ```
+
+3. Update the `api-config.js` file with your production backend URL.
+
+### Extension (Chrome Web Store)
+
+1. Update the `api-config.js` file with your production backend URL.
+
+2. Create a ZIP file of the extension directory.
+
+3. Upload to the Chrome Web Store Developer Dashboard.
 
 ## How to Use
 

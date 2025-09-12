@@ -15,24 +15,22 @@ document.getElementById('signIn').onclick = async function() {
     }
     
     try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        const response = await fetch(`${API_URL}/auth/signin`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email, password })
         });
         
         const data = await response.json();
         
-        if (data.access_token) {
-            currentUser = { email, token: data.access_token };
+        if (data.user && data.user.token) {
+            currentUser = data.user;
             showUserSection();
             loadSnaps();
-        } else if (data.error_description) {
-            alert(`Sign in failed: ${data.error_description}`);
+        } else if (data.message) {
+            alert(`Sign in failed: ${data.message}`);
         } else {
             alert('Sign in failed. Please check your credentials and confirm your email.');
         }
@@ -60,22 +58,20 @@ document.getElementById('signUp').onclick = async function() {
     }
     
     try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        const response = await fetch(`${API_URL}/auth/signup`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email, password })
         });
         
         const data = await response.json();
         
-        if (data.access_token || data.user) {
+        if (data.success) {
             alert('Sign up successful! Please check your email for a confirmation link, then sign in.');
-        } else if (data.msg) {
-            alert(`Sign up failed: ${data.msg}`);
+        } else if (data.message) {
+            alert(`Sign up failed: ${data.message}`);
         } else {
             alert('Sign up failed. Please try again.');
         }
@@ -104,9 +100,8 @@ async function loadSnaps() {
     if (!currentUser) return;
     
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${currentUser.email}&order=created_at.desc`, {
+        const response = await fetch(`${API_URL}/snaps?email=${encodeURIComponent(currentUser.email)}`, {
             headers: {
-                'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${currentUser.token}`
             }
         });
