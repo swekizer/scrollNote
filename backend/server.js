@@ -42,6 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
   'https://scrollnote-home.onrender.com',
+  'chrome-extension://bcneigfhlnciekeocdkhmppblbcjidno',
   // Add your Chrome extension ID here
 ];
 
