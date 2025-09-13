@@ -1,7 +1,7 @@
 importScripts('api-config.js');
 
 async function uploadScreenshotToBackend(base64Data, userEmail, userToken) {
-  const fileName = `snap_${Date.now()}_${Math.floor(Math.random()*10000)}.png`;
+  const fileName = `note_${Date.now()}_${Math.floor(Math.random()*10000)}.png`;
   
   const uploadRes = await fetch(`${API_URL}/api/storage/upload`, {
     method: 'POST',
@@ -30,23 +30,23 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   
   if (request.action === 'captureScreenshot') {
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
-      let snapData = request.data;
+      let noteData = request.data;
       if (chrome.runtime.lastError) {
         console.error('Screenshot error:', chrome.runtime.lastError?.message || chrome.runtime.lastError);
         // Still show note input, but indicate screenshot failed
-        snapData.screenshot = null;
-        snapData.screenshotError = true;
+        noteData.screenshot = null;
+        noteData.screenshotError = true;
       } else {
-        snapData.screenshot = dataUrl;
-        snapData.screenshotError = false;
+        noteData.screenshot = dataUrl;
+        noteData.screenshotError = false;
       }
-      console.log('Sending showNoteInput to content script, screenshotError:', snapData.screenshotError);
+      console.log('Sending showNoteInput to content script, screenshotError:', noteData.screenshotError);
       // Robustly send message to content script
       let tabId = sender.tab && sender.tab.id;
       if (tabId) {
         chrome.tabs.sendMessage(tabId, {
           action: 'showNoteInput',
-          data: snapData
+          data: noteData
         }, function(response) {
           if (chrome.runtime.lastError) {
             console.error('Error sending message to content script:', chrome.runtime.lastError);
@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           if (tabs[0]) {
             chrome.tabs.sendMessage(tabs[0].id, {
               action: 'showNoteInput',
-              data: snapData
+              data: noteData
             }, function(response) {
               if (chrome.runtime.lastError) {
                 console.error('Error sending message to content script (fallback):', chrome.runtime.lastError);
@@ -116,21 +116,21 @@ async function saveToBackend(data, sender) {
       body: JSON.stringify(data)
     });
     if (response.ok) {
-      console.log('Snap saved successfully');
+      console.log('Note saved successfully');
       success = true;
     } else {
       const errorText = await response.text();
-      console.error('Failed to save snap:', errorText);
-      errorMsg = 'Failed to save snap: ' + errorText;
+      console.error('Failed to save note:', errorText);
+      errorMsg = 'Failed to save note: ' + errorText;
     }
   } catch (error) {
-    console.error('Error saving snap:', error);
+    console.error('Error saving note:', error);
     errorMsg = error.message || 'Unknown error';
   }
   // Notify content script of result
   let tabId = sender.tab && sender.tab.id;
   const message = {
-    action: 'snapSaveResult',
+    action: 'noteSaveResult',
     success,
     error: errorMsg
   };

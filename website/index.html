@@ -1,26 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>scrollNote - My Snaps</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scrollNote - Capture & Organize Your Web Notes</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>My Snaps</h1>
-        
-        <div id="authForm" class="auth-form">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button id="signIn">Sign In</button>
-            <button id="signUp">Sign Up</button>
-        </div>
-        
-        <div id="userSection" style="display:none;">
-            <div class="user-info">
-                <span id="userEmail"></span>
-                <button id="signOut">Sign Out</button>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <img src="image.png" alt="scrollNote" class="logo">
+                <span class="logo-text">scrollNote</span>
             </div>
-            <div id="snapsContainer"></div>
+            <div class="nav-actions">
+                <button id="navSignIn" class="nav-btn secondary">Sign In</button>
+                <button id="navSignUp" class="nav-btn primary">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing-page">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Capture & Organize Your Web Notes</h1>
+                <p class="hero-subtitle">Transform any web content into organized notes with our powerful browser extension. Select text, add screenshots, and create your personal knowledge base.</p>
+                <div class="hero-actions">
+                    <button id="heroSignUp" class="cta-btn primary">Start Free</button>
+                    <button id="heroLearnMore" class="cta-btn secondary">Learn More</button>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <div class="demo-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span class="demo-title">scrollNote Extension</span>
+                    </div>
+                    <div class="demo-content">
+                        <div class="demo-image"></div>
+                        <div class="demo-text">
+                            <p class="demo-selected">Selected text from any webpage...</p>
+                            <p class="demo-note">Your personal note here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="features-container">
+                <h2 class="section-title">Why Choose scrollNote?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>Smart Text Selection</h3>
+                        <p>Select any text on any webpage and instantly capture it with context and screenshots.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🖼️</div>
+                        <h3>Visual Screenshots</h3>
+                        <p>Automatically capture screenshots of the content you're saving for better context.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🗂️</div>
+                        <h3>Organized Notes</h3>
+                        <p>Keep all your web discoveries organized in a clean, searchable interface.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔗</div>
+                        <h3>Source Tracking</h3>
+                        <p>Always remember where you found something with automatic URL tracking.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="how-it-works">
+            <div class="how-container">
+                <h2 class="section-title">How It Works</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Install Extension</h3>
+                            <p>Add scrollNote to your browser in seconds</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Select & Capture</h3>
+                            <p>Highlight any text and click the extension icon</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Add Notes</h3>
+                            <p>Add your personal notes and organize your captures</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display:none;">
+        <div class="auth-overlay"></div>
+        <div class="auth-container">
+            <div class="auth-header">
+                <img src="image.png" alt="scrollNote" class="auth-logo">
+                <h2 id="authTitle">Welcome to scrollNote</h2>
+                <p id="authSubtitle">Sign in to access your notes</p>
+                <button class="auth-close">&times;</button>
+            </div>
+            <div class="auth-form">
+                <input type="email" id="email" placeholder="Email address" class="auth-input">
+                <input type="password" id="password" placeholder="Password" class="auth-input">
+                <button id="signIn" class="auth-btn primary">Sign In</button>
+                <button id="signUp" class="auth-btn secondary">Create Account</button>
+                <div class="auth-switch">
+                    <span id="authSwitchText">Don't have an account?</span>
+                    <button id="authSwitchBtn" class="auth-link">Sign up instead</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Dashboard -->
+    <div id="notesDashboard" class="notes-dashboard" style="display:none;">
+        <div class="dashboard-header">
+            <div class="dashboard-nav">
+                <img src="image.png" alt="scrollNote" class="dashboard-logo">
+                <h1>My Notes</h1>
+            </div>
+            <div class="dashboard-actions">
+                <span id="userEmail" class="user-email"></span>
+                <button id="signOut" class="sign-out-btn">Sign Out</button>
+            </div>
+        </div>
+        <div class="notes-container">
+            <div id="notesGrid" class="notes-grid"></div>
         </div>
     </div>
     

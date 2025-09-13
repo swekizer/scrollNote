@@ -27,12 +27,12 @@ function showSaveButton(e) {
   });
 
   saveButton.onclick = function() {
-    captureSnap();
+    captureNote();
   };
   document.body.appendChild(saveButton);
 }
 
-function captureSnap() {
+function captureNote() {
   const selection = window.getSelection();
   const selectedText = selection.toString().trim();
   if (!selectedText) {
@@ -41,7 +41,7 @@ function captureSnap() {
   }
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
-  const snapData = {
+  const noteData = {
     text: selectedText,
     url: window.location.href,
     title: document.title,
@@ -53,10 +53,10 @@ function captureSnap() {
     timestamp: new Date().toISOString()
   };
   // Always show the note input immediately
-  showNoteInput(snapData, true); // true = waiting for screenshot
+  showNoteInput(noteData, true); // true = waiting for screenshot
   chrome.runtime.sendMessage({
     action: 'captureScreenshot',
-    data: snapData
+    data: noteData
   }, function(response) {
     if (chrome.runtime.lastError) {
       console.error('Error sending message:', chrome.runtime.lastError);
@@ -68,30 +68,30 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === 'showNoteInput') {
     showNoteInput(request.data, false);
   }
-  if (request.action === 'snapSaveResult') {
-    handleSnapSaveResult(request.success, request.error);
+  if (request.action === 'noteSaveResult') {
+    handleNoteSaveResult(request.success, request.error);
   }
   sendResponse({status: 'received'});
 });
 
 let currentNoteDiv = null;
 
-function showNoteInput(snapData, waitingForScreenshot = false) {
+function showNoteInput(noteData, waitingForScreenshot = false) {
   if (saveButton) saveButton.remove();
   if (currentNoteDiv) currentNoteDiv.remove();
   const noteDiv = document.createElement('div');
   currentNoteDiv = noteDiv;
   noteDiv.className = 'scrollnote-input';
   let warning = '';
-  if (snapData.screenshotError) {
-    warning = '<div style="color:red; margin-bottom:8px;">Screenshot unavailable for this page.</div>';
+  if (noteData.screenshotError) {
+    warning = '<div style="color:#ff6b6b; margin-bottom:8px;">Screenshot unavailable for this page.</div>';
   } else if (waitingForScreenshot) {
-    warning = '<div style="color:gray; margin-bottom:8px;">Attempting to capture screenshot...</div>';
+    warning = '<div style="color:#888888; margin-bottom:8px;">Attempting to capture screenshot...</div>';
   }
   noteDiv.innerHTML = `
     ${warning}
     <textarea placeholder="Add your note..."></textarea>
-    <button id="scrollnote-save-btn">Save</button>
+    <button id="scrollnote-save-btn">Save Note</button>
     <button id="scrollnote-cancel-btn">Cancel</button>
     <div id="scrollnote-status-msg" style="margin-top:8px;"></div>
   `;
@@ -103,12 +103,12 @@ function showNoteInput(snapData, waitingForScreenshot = false) {
   document.body.appendChild(noteDiv);
   noteDiv.querySelector('#scrollnote-save-btn').onclick = function() {
     const note = noteDiv.querySelector('textarea').value;
-    snapData.note = note;
+    noteData.note = note;
     this.disabled = true; // Disable the Save button immediately to prevent multiple submissions
     noteDiv.querySelector('#scrollnote-status-msg').textContent = 'Saving...';
     chrome.runtime.sendMessage({
       action: 'saveToSupabase',
-      data: snapData
+      data: noteData
     });
   };
   noteDiv.querySelector('#scrollnote-cancel-btn').onclick = function() {
@@ -117,17 +117,18 @@ function showNoteInput(snapData, waitingForScreenshot = false) {
   };
 }
 
-function handleSnapSaveResult(success, error) {
+function handleNoteSaveResult(success, error) {
   if (!currentNoteDiv) return;
   const statusMsg = currentNoteDiv.querySelector('#scrollnote-status-msg');
   if (success) {
-    statusMsg.textContent = 'Snap saved successfully!';
+    statusMsg.textContent = 'Note saved successfully!';
+    statusMsg.style.color = '#4ade80';
     setTimeout(() => {
       if (currentNoteDiv) currentNoteDiv.remove();
       currentNoteDiv = null;
     }, 1200);
   } else {
-    statusMsg.textContent = 'Failed to save snap: ' + (error || 'Unknown error');
-    statusMsg.style.color = 'red';
+    statusMsg.textContent = 'Failed to save note: ' + (error || 'Unknown error');
+    statusMsg.style.color = '#ff6b6b';
   }
 }
