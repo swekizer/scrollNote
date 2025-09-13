@@ -78,7 +78,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
   
   if (request.action === 'saveToSupabase') {
-    saveToSupabase(request.data, sender);
+    saveToBackend(request.data, sender);
     sendResponse({status: 'saving'});
   }
 });

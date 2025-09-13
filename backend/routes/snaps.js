@@ -5,25 +5,6 @@ const router = express.Router();
 
 /**
  * @route GET /api/snaps
- * @desc Root route for snaps API
- * @access Public
- */
-router.get('/', (req, res) => {
-  // Check if this is an informational request without authentication
-  if (!req.headers.authorization) {
-    return res.status(200).json({
-      message: 'Snaps API',
-      usage: 'Send a GET request with authentication to retrieve user snaps',
-      required_headers: ['Authorization'],
-      required_query: ['email']
-    });
-  }
-  
-  // If authentication is provided, the existing handler will process the request
-}); 
-
-/**
- * @route GET /api/snaps
  * @desc Get all snaps for a user
  * @access Private
  */
@@ -31,6 +12,9 @@ router.get('/', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     const userEmail = req.query.email;
+    
+    console.log('GET /api/snaps - Token:', token ? 'Present' : 'Missing');
+    console.log('GET /api/snaps - User Email:', userEmail);
     
     if (!token || !userEmail) {
       return res.status(401).json({ 
@@ -40,6 +24,7 @@ router.get('/', async (req, res) => {
     }
     
     const snaps = await snapsService.getSnaps(userEmail, token);
+    console.log('Snaps retrieved from Supabase:', snaps);
     res.json(snaps);
   } catch (error) {
     console.error('Error fetching snaps:', error);

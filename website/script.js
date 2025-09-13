@@ -102,6 +102,7 @@ async function loadSnaps() {
     if (!currentUser) return;
     
     try {
+        console.log('Loading snaps for user:', currentUser.email);
         const response = await fetch(`${API_URL}/api/snaps?email=${encodeURIComponent(currentUser.email)}`, {
             headers: {
                 'Authorization': `Bearer ${currentUser.token}`
@@ -109,7 +110,9 @@ async function loadSnaps() {
             credentials: 'include'
         });
         
+        console.log('Snaps response status:', response.status);
         const snaps = await response.json();
+        console.log('Snaps data received:', snaps);
         displaySnaps(snaps);
     } catch (error) {
         console.error('Error loading snaps:', error);

@@ -67,17 +67,21 @@ export const snapsService = {
    * @returns {Promise<Array>} - Array of snaps
    */
   async getSnaps(userEmail, token) {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc`, 
-      {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    );
+    const url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc`;
+    console.log('Supabase query URL:', url);
     
-    return response.json();
+    const response = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    console.log('Supabase response status:', response.status);
+    const data = await response.json();
+    console.log('Supabase response data:', data);
+    
+    return data;
   },
   
   /**
@@ -87,6 +91,8 @@ export const snapsService = {
    * @returns {Promise<Object>} - Created snap
    */
   async createSnap(snapData, token) {
+    console.log('Creating snap with data:', snapData);
+    
     const response = await fetch(`${SUPABASE_URL}/rest/v1/snaps`, {
       method: 'POST',
       headers: {
@@ -98,7 +104,11 @@ export const snapsService = {
       body: JSON.stringify(snapData)
     });
     
-    return response.json();
+    console.log('Snap creation response status:', response.status);
+    const data = await response.json();
+    console.log('Snap creation response data:', data);
+    
+    return data;
   }
 };
 
