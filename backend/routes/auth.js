@@ -32,6 +32,20 @@ router.get('/signin', (req, res) => {
 });
 
 /**
+ * @route OPTIONS /api/auth/signin
+ * @desc Handle preflight requests for signin
+ * @access Public
+ */
+router.options('/signin', (req, res) => {
+  // Set CORS headers specifically for this endpoint
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(204).end();
+});
+
+/**
  * @route POST /api/auth/signin
  * @desc Sign in a user
  * @access Public
@@ -82,6 +96,20 @@ router.get('/signup', (req, res) => {
     usage: 'Send a POST request to this endpoint with email and password in the request body',
     required_fields: ['email', 'password']
   });
+});
+
+/**
+ * @route OPTIONS /api/auth/signup
+ * @desc Handle preflight requests for signup
+ * @access Public
+ */
+router.options('/signup', (req, res) => {
+  // Set CORS headers specifically for this endpoint
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(204).end();
 });
 
 /**

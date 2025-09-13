@@ -46,23 +46,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   // Add your Chrome extension ID here
 ];
 
-// Handle preflight requests first
-app.options('*', cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(null, false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 204
-}));
-
-// Regular CORS middleware
+// Set up CORS middleware with proper configuration for credentials
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps, curl requests)
@@ -70,13 +54,18 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) === -1) {
       return callback(null, false);
     }
-    return callback(null, true);
+    return callback(null, origin);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   optionsSuccessStatus: 204
 }));
+
+// Handle OPTIONS preflight requests explicitly
+app.options('*', cors());
+
+
 
 // Logging middleware
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));

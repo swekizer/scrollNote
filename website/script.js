@@ -20,6 +20,7 @@ document.getElementById('signIn').onclick = async function() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ email, password })
         });
         
@@ -63,6 +64,7 @@ document.getElementById('signUp').onclick = async function() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({ email, password })
         });
         
@@ -103,7 +105,8 @@ async function loadSnaps() {
         const response = await fetch(`${API_URL}/api/snaps?email=${encodeURIComponent(currentUser.email)}`, {
             headers: {
                 'Authorization': `Bearer ${currentUser.token}`
-            }
+            },
+            credentials: 'include'
         });
         
         const snaps = await response.json();
