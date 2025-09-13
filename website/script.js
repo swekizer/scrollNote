@@ -1,5 +1,8 @@
 let currentUser = null;
 
+// Initialize Supabase client
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 document.getElementById('signIn').onclick = async function() {
     const signInButton = this;
     signInButton.disabled = true;
@@ -15,29 +18,27 @@ document.getElementById('signIn').onclick = async function() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/api/auth/signin`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ email, password })
+        // Use Supabase direct authentication
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
         });
         
-        const data = await response.json();
+        if (error) throw error;
         
-        if (data.user && data.user.token) {
-            currentUser = data.user;
+        if (data.user && data.session) {
+            currentUser = {
+                email: data.user.email,
+                token: data.session.access_token
+            };
             showUserSection();
             loadSnaps();
-        } else if (data.message) {
-            alert(`Sign in failed: ${data.message}`);
         } else {
             alert('Sign in failed. Please check your credentials and confirm your email.');
         }
     } catch (error) {
         console.error('Sign in error:', error);
-        alert('An error occurred during sign in. Please try again.');
+        alert(`An error occurred during sign in: ${error.message}`);
     } finally {
         signInButton.disabled = false;
         signInButton.textContent = 'Sign In';
@@ -59,37 +60,37 @@ document.getElementById('signUp').onclick = async function() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/api/auth/signup`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ email, password })
+        // Use Supabase direct authentication
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password
         });
         
-        const data = await response.json();
+        if (error) throw error;
         
-        if (data.success) {
-            alert('Sign up successful! Please check your email for a confirmation link, then sign in.');
-        } else if (data.message) {
-            alert(`Sign up failed: ${data.message}`);
-        } else {
-            alert('Sign up failed. Please try again.');
-        }
+        alert('Sign up successful! Please check your email for a confirmation link, then sign in.');
     } catch (error) {
         console.error('Sign up error:', error);
-        alert('An error occurred during sign up. Please try again.');
+        alert(`Sign up failed: ${error.message}`);
     } finally {
         signUpButton.disabled = false;
         signUpButton.textContent = 'Sign Up';
     }
 };
 
-document.getElementById('signOut').onclick = function() {
-    currentUser = null;
-    document.getElementById('userSection').style.display = 'none';
-    document.getElementById('authForm').style.display = 'block';
+document.getElementById('signOut').onclick = async function() {
+    try {
+        // Sign out from Supabase
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        
+        currentUser = null;
+        document.getElementById('userSection').style.display = 'none';
+        document.getElementById('authForm').style.display = 'block';
+    } catch (error) {
+        console.error('Sign out error:', error);
+        alert(`Error signing out: ${error.message}`);
+    }
 };
 
 function showUserSection() {
@@ -102,17 +103,19 @@ async function loadSnaps() {
     if (!currentUser) return;
     
     try {
-        const response = await fetch(`${API_URL}/api/snaps?email=${encodeURIComponent(currentUser.email)}`, {
-            headers: {
-                'Authorization': `Bearer ${currentUser.token}`
-            },
-            credentials: 'include'
-        });
+        // Use Supabase direct query with RLS policies
+        const { data: snaps, error } = await supabase
+            .from('snaps')
+            .select('*')
+            .eq('user_email', currentUser.email)
+            .order('created_at', { ascending: false });
         
-        const snaps = await response.json();
-        displaySnaps(snaps);
+        if (error) throw error;
+        
+        displaySnaps(snaps || []);
     } catch (error) {
         console.error('Error loading snaps:', error);
+        alert(`Error loading snaps: ${error.message}`);
     }
 }
 

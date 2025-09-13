@@ -5,27 +5,28 @@ document.getElementById('signIn').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
     
-    const data = await response.json();
+    if (error) throw error;
     
-    if (data.user && data.user.token) {
+    if (data.user && data.session) {
+      const userData = {
+        email: data.user.email,
+        id: data.user.id,
+        token: data.session.access_token
+      };
+      
       chrome.storage.local.set({
-        user: data.user
+        user: userData
       });
       showUserSection(email);
-    } else if (data.message) {
-      alert(`Sign in failed: ${data.message}`);
     }
   } catch (error) {
     console.error('Sign in error:', error);
-    alert('An error occurred during sign in');
+    alert(`Sign in failed: ${error.message || 'An error occurred'}`);
   }
 };
 
@@ -36,26 +37,21 @@ document.getElementById('signUp').onclick = async function() {
   if (!email || !password) return;
   
   try {
-    const response = await fetch(`${API_URL}/api/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
     });
     
-    const data = await response.json();
+    if (error) throw error;
     
-    if (data.success) {
-      alert('Sign up successful! Please sign in.');
-    } else if (data.message) {
-      alert(`Sign up failed: ${data.message}`);
+    if (data.user) {
+      alert('Sign up successful! Please check your email for confirmation and then sign in.');
     } else {
       alert('Sign up failed. Please try again.');
     }
   } catch (error) {
     console.error('Sign up error:', error);
-    alert('An error occurred during sign up');
+    alert(`Sign up failed: ${error.message || 'An error occurred'}`);
   }
 };
 
@@ -64,10 +60,18 @@ document.getElementById('viewSnaps').onclick = function() {
   chrome.tabs.create({url: 'https://scrollnote-home.onrender.com'});
 };
 
-document.getElementById('signOut').onclick = function() {
-  chrome.storage.local.remove(['user']);
-  document.getElementById('authForm').style.display = 'block';
-  document.getElementById('userSection').style.display = 'none';
+document.getElementById('signOut').onclick = async function() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    
+    chrome.storage.local.remove(['user']);
+    document.getElementById('authForm').style.display = 'block';
+    document.getElementById('userSection').style.display = 'none';
+  } catch (error) {
+    console.error('Sign out error:', error);
+    alert(`Sign out failed: ${error.message || 'An error occurred'}`);
+  }
 };
 
 function showUserSection(email) {
