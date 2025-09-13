@@ -70,7 +70,8 @@
     <div class="result" id="result">Results will appear here...</div>
 
     <script>
-        const API_URL = 'https://scrollnote.onrender.com';
+        // Use local server for testing
+        const API_URL = 'http://localhost:5000';
         
         document.getElementById('testOptions').addEventListener('click', async () => {
             const resultDiv = document.getElementById('result');
