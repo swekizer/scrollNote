@@ -4,6 +4,21 @@ import { authService } from '../services/supabase.js';
 const router = express.Router();
 
 /**
+ * @route GET /api/auth
+ * @desc Root route for auth API
+ * @access Public
+ */
+router.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Auth API',
+    endpoints: [
+      '/signin - User authentication',
+      '/signup - User registration'
+    ]
+  });
+});
+
+/**
  * @route GET /api/auth/signin
  * @desc Provide information about the signin endpoint
  * @access Public

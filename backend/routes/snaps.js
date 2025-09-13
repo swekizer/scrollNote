@@ -5,6 +5,25 @@ const router = express.Router();
 
 /**
  * @route GET /api/snaps
+ * @desc Root route for snaps API
+ * @access Public
+ */
+router.get('/', (req, res) => {
+  // Check if this is an informational request without authentication
+  if (!req.headers.authorization) {
+    return res.status(200).json({
+      message: 'Snaps API',
+      usage: 'Send a GET request with authentication to retrieve user snaps',
+      required_headers: ['Authorization'],
+      required_query: ['email']
+    });
+  }
+  
+  // If authentication is provided, the existing handler will process the request
+}); 
+
+/**
+ * @route GET /api/snaps
  * @desc Get all snaps for a user
  * @access Private
  */

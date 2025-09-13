@@ -4,6 +4,21 @@ import { storageService } from '../services/supabase.js';
 const router = express.Router();
 
 /**
+ * @route GET /api/storage
+ * @desc Root route for storage API
+ * @access Public
+ */
+router.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'Storage API',
+    endpoints: [
+      '/upload - Upload files to storage'
+    ],
+    note: 'Authentication required for all endpoints'
+  });
+});
+
+/**
  * @route POST /api/storage/upload
  * @desc Upload a file to Supabase storage
  * @access Private
