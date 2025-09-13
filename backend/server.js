@@ -38,35 +38,10 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:3000',
-  'http://localhost:5000',
-  'http://localhost',
-  'http://127.0.0.1:5000',
-  'http://127.0.0.1',
-  'file://',
-  'https://scrollnote-home.onrender.com',
-  'chrome-extension://bcneigfhlnciekeocdkhmppblbcjidno',
-  // Add your Chrome extension ID here
-];
-
-// Set up CORS middleware with proper configuration for credentials
+// CORS configuration - ALLOWING ALL ORIGINS (TEMPORARY FIX)
+// WARNING: This reduces security and should only be used for testing
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests, or file:// protocol)
-    if (!origin) return callback(null, true);
-    
-    // Check if the origin is in our allowed list
-    if (allowedOrigins.indexOf(origin) === -1) {
-      // For file:// protocol or local testing
-      if (origin.startsWith('file://') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return callback(null, origin);
-      }
-      return callback(null, false);
-    }
-    return callback(null, origin);
-  },
+  origin: true, // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
