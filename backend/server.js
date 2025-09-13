@@ -59,6 +59,19 @@ app.use('/api/auth', authRoutes);
 app.use('/api/snaps', snapsRoutes);
 app.use('/api/storage', storageRoutes);
 
+// Root route handler
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'ScrollNote API Server', 
+    status: 'running',
+    endpoints: [
+      '/api/auth - Authentication endpoints',
+      '/api/snaps - Screenshot management endpoints',
+      '/api/storage - Storage management endpoints'
+    ]
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

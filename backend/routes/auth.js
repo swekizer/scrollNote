@@ -4,6 +4,19 @@ import { authService } from '../services/supabase.js';
 const router = express.Router();
 
 /**
+ * @route GET /api/auth/signin
+ * @desc Provide information about the signin endpoint
+ * @access Public
+ */
+router.get('/signin', (req, res) => {
+  res.status(200).json({
+    message: 'Authentication endpoint',
+    usage: 'Send a POST request to this endpoint with email and password in the request body',
+    required_fields: ['email', 'password']
+  });
+});
+
+/**
  * @route POST /api/auth/signin
  * @desc Sign in a user
  * @access Public
@@ -41,6 +54,19 @@ router.post('/signin', async (req, res) => {
       message: 'An error occurred during sign in' 
     });
   }
+});
+
+/**
+ * @route GET /api/auth/signup
+ * @desc Provide information about the signup endpoint
+ * @access Public
+ */
+router.get('/signup', (req, res) => {
+  res.status(200).json({
+    message: 'Registration endpoint',
+    usage: 'Send a POST request to this endpoint with email and password in the request body',
+    required_fields: ['email', 'password']
+  });
 });
 
 /**
