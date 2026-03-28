@@ -34,14 +34,38 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Parse JSON bodies
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Specific parser for the storage upload route to handle large base64 screenshots securely
+app.use('/api/storage/upload', express.json({ limit: '25mb' }));
 
-// CORS configuration - ALLOWING ALL ORIGINS (TEMPORARY FIX)
-// WARNING: This reduces security and should only be used for testing
+// Parse JSON bodies for everything else with a safe limit
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// CORS configuration - Secure Settings
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5500',
+      'http://127.0.0.1:5500'
+    ];
+
+const extensionId = process.env.EXTENSION_ID;
+
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: function (origin, callback) {
+    if (
+      !origin || // Allow requests with no origin (like curl requests or mobile apps)
+      allowedOrigins.includes(origin) || // Allow explicitly defined web origins
+      (extensionId && origin === `chrome-extension://${extensionId}`) || // Allow specific Chrome extension
+      (!extensionId && origin.startsWith('chrome-extension://')) // Fallback for local dev without ID
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],

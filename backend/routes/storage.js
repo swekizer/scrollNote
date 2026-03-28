@@ -1,5 +1,6 @@
 import express from 'express';
 import { storageService } from '../services/supabase.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -23,12 +24,12 @@ router.get('/', (req, res) => {
  * @desc Upload a file to Supabase storage
  * @access Private
  */
-router.post('/upload', async (req, res) => {
+router.post('/upload', authMiddleware, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers.authorization.split(' ')[1];
     const { fileData, fileName, userEmail } = req.body;
     
-    if (!token || !userEmail) {
+    if (!userEmail) {
       return res.status(401).json({ 
         error: true, 
         message: 'Authentication required' 
@@ -42,8 +43,19 @@ router.post('/upload', async (req, res) => {
       });
     }
     
-    // Convert base64 to buffer
-    const base64Data = fileData.split(',')[1];
+    // Safely parse the base64 string
+    const parts = fileData.split(',');
+    
+    // Check if it was malformed or missing the explicit data-URI prefix
+    const base64Data = parts.length > 1 ? parts[1] : parts[0];
+
+    if (!base64Data) {
+       return res.status(400).json({ 
+        error: true, 
+        message: 'Invalid base64 payload provided' 
+      });
+    }
+
     const fileBuffer = Buffer.from(base64Data, 'base64');
     
     const fileUrl = await storageService.uploadFile(

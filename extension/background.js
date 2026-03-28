@@ -29,7 +29,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log('Background received:', request);
   
   if (request.action === 'captureScreenshot') {
-    chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+    const windowId = sender.tab?.windowId;
+    chrome.tabs.captureVisibleTab(windowId, { format: 'jpeg', quality: 80 }, function(dataUrl) {
       let noteData = request.data;
       if (chrome.runtime.lastError) {
         console.error('Screenshot error:', chrome.runtime.lastError?.message || chrome.runtime.lastError);
@@ -42,7 +43,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       }
       console.log('Sending showNoteInput to content script, screenshotError:', noteData.screenshotError);
       // Robustly send message to content script
-      let tabId = sender.tab && sender.tab.id;
+      let tabId = request.tabId || (sender.tab && sender.tab.id);
       if (tabId) {
         chrome.tabs.sendMessage(tabId, {
           action: 'showNoteInput',
@@ -55,22 +56,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           }
         });
       } else {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-          if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              action: 'showNoteInput',
-              data: noteData
-            }, function(response) {
-              if (chrome.runtime.lastError) {
-                console.error('Error sending message to content script (fallback):', chrome.runtime.lastError);
-              } else {
-                console.log('Message sent to content script (fallback):', response);
-              }
-            });
-          } else {
-            console.error('No active tab found to send showNoteInput');
-          }
-        });
+        console.error('No valid tab ID found to send showNoteInput');
       }
     });
     sendResponse({status: 'capturing'});
@@ -78,14 +64,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   }
   
   if (request.action === 'saveToSupabase') {
-    saveToBackend(request.data, sender);
+    saveToBackend(request.data, sender, request.tabId);
     sendResponse({status: 'saving'});
   }
 });
 
-async function saveToBackend(data, sender) {
+async function saveToBackend(data, sender, explicitTabId) {
   let success = false;
   let errorMsg = '';
+  let warningMsg = '';
   try {
     const userStorage = await chrome.storage.local.get(['user']);
     if (!userStorage.user) throw new Error('User not authenticated');
@@ -98,6 +85,7 @@ async function saveToBackend(data, sender) {
         data.screenshot = url;
       } catch (uploadErr) {
         console.error('Screenshot upload failed:', uploadErr);
+        warningMsg = 'Screenshot upload failed. The note was saved without screenshot.';
         data.screenshot = null;
       }
     }
@@ -115,11 +103,23 @@ async function saveToBackend(data, sender) {
       },
       body: JSON.stringify(data)
     });
+
+    if (response.status === 401) {
+       chrome.storage.local.remove(['user']);
+       throw new Error('Session expired. Please click the scrollNote icon and sign in again.');
+    }
+
     if (response.ok) {
       console.log('Note saved successfully');
       success = true;
     } else {
-      const errorText = await response.text();
+      let errorText = '';
+      try {
+        const errorBody = await response.json();
+        errorText = errorBody.message || JSON.stringify(errorBody);
+      } catch (_unused) {
+        errorText = await response.text();
+      }
       console.error('Failed to save note:', errorText);
       errorMsg = 'Failed to save note: ' + errorText;
     }
@@ -128,19 +128,16 @@ async function saveToBackend(data, sender) {
     errorMsg = error.message || 'Unknown error';
   }
   // Notify content script of result
-  let tabId = sender.tab && sender.tab.id;
+  let tabId = explicitTabId || (sender.tab && sender.tab.id);
   const message = {
     action: 'noteSaveResult',
     success,
-    error: errorMsg
+    error: errorMsg,
+    warning: warningMsg
   };
   if (tabId) {
     chrome.tabs.sendMessage(tabId, message);
   } else {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, message);
-      }
-    });
+    console.error('No valid tab ID found to send save result');
   }
 }

@@ -82,18 +82,22 @@ scrollNote/
 
 ### Website
 
-1. Update the `api-config.js` file with your backend URL.
+1. In `website/api-config.js`, set `SCROLLNOTE_ENV` to `'development'` for local or `'production'` for deploy.
 
-2. Serve the website using a local server:
+2. Set the matching `apiUrl` value in the same file.
+
+3. Serve the website using a local server:
    ```
    npx serve website
    ```
 
 ### Extension
 
-1. Update the `api-config.js` file with your backend URL.
+1. In `extension/api-config.js`, use the same `SCROLLNOTE_ENV` value as the website.
 
-2. Load the extension in Chrome:
+2. Set matching `apiUrl` and `websiteUrl` values for that environment.
+
+3. Load the extension in Chrome:
    - Open Chrome and navigate to `chrome://extensions/`
    - Enable "Developer mode"
    - Click "Load unpacked" and select the `extension` directory
@@ -150,7 +154,7 @@ scrollNote/
 ### Viewing Your Snaps
 
 1. Click the scrollNote extension icon
-2. Click "View My Snaps" to open the web interface
+2. Click "View My Notes" to open the web interface
 3. Browse all your saved snaps with screenshots and notes
 
 ## Known Issues and Solutions

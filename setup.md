@@ -82,14 +82,22 @@ CREATE POLICY "Public can view screenshots" ON storage.objects
 
 ### 3. Configure the Project
 
-#### Update Supabase Configuration
+#### Update Frontend API Configuration
 1. In your Supabase dashboard, go to Settings → API
 2. Copy your Project URL and anon public key
-3. Update both `extension/supabase-config.js` and `website/supabase-config.js`:
+3. Update both `extension/api-config.js` and `website/api-config.js` to point to your backend and keep both on the same `SCROLLNOTE_ENV`.
 
 ```javascript
-const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SCROLLNOTE_ENV = 'development';
+
+const SCROLLNOTE_CONFIG = {
+    development: {
+        apiUrl: 'http://localhost:5000'
+    },
+    production: {
+        apiUrl: 'https://your-backend-url.onrender.com'
+    }
+};
 ```
 
 ### 4. Install the Chrome Extension

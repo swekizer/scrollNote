@@ -64,16 +64,24 @@ export const snapsService = {
    * Get all snaps for a user
    * @param {string} userEmail - User email
    * @param {string} token - User authentication token
+   * @param {number} [page=1] - Page number (1-indexed)
+   * @param {number} [limit=20] - Number of items per page
    * @returns {Promise<Array>} - Array of snaps
    */
-  async getSnaps(userEmail, token) {
-    const url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc`;
+  async getSnaps(userEmail, token, page = 1, limit = 20) {
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20)); // Max 100 items per request
+    const offset = (pageNum - 1) * limitNum;
+    const end = offset + limitNum - 1;
+
+    const url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc&limit=${limitNum}&offset=${offset}`;
     console.log('Supabase query URL:', url);
     
     const response = await fetch(url, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'Range': `${offset}-${end}` // Supabase expects a Range header for pagination
       }
     });
     
@@ -125,7 +133,15 @@ export const storageService = {
    * @returns {Promise<string>} - File URL
    */
   async uploadFile(fileBuffer, fileName, userEmail, token) {
-    const path = `screenshots/${userEmail}/${fileName}`;
+    // Sanitize inputs to prevent path traversal
+    const safeEmail = String(userEmail).replace(/[^a-zA-Z0-9@._-]/g, '');
+    const safeFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
+    
+    if (!safeEmail || !safeFileName) {
+      throw new Error('Invalid user email or file name');
+    }
+
+    const path = `screenshots/${safeEmail}/${safeFileName}`;
     
     const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${path}`, {
       method: 'POST',

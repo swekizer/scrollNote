@@ -60,8 +60,7 @@ document.getElementById('signUp').onclick = async function() {
 };
 
 document.getElementById('viewNotes').onclick = function() {
-  // Using the deployed website URL for production
-  chrome.tabs.create({url: 'https://scrollnote-home.onrender.com'});
+  chrome.tabs.create({url: WEBSITE_URL});
 };
 
 document.getElementById('signOut').onclick = function() {
