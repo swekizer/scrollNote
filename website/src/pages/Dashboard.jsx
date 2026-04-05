@@ -715,6 +715,15 @@ export default function Dashboard() {
 
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                    Personal Note
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                    {selectedNote.note?.trim() || "No personal note added."}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
                     Source
                   </h3>
                   <a

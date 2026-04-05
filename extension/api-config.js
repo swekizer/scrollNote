@@ -11,8 +11,8 @@
 
 const DEFAULT_CONFIG = {
   development: {
-    apiUrl: "http://localhost:5000",
-    websiteUrl: "http://localhost:5173",
+    apiUrl: "https://scrollnote.onrender.com",
+    websiteUrl: "https://scroll-note.vercel.app",
   },
   production: {
     apiUrl: "https://scrollnote.onrender.com",

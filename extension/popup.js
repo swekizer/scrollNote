@@ -22,10 +22,12 @@ document.getElementById("signIn").onclick = async function () {
       showUserSection(email);
     } else if (data.message) {
       alert(`Sign in failed: ${data.message}`);
+    } else {
+      alert("Sign in failed. Please check your credentials and try again.");
     }
   } catch (error) {
     console.error("Sign in error:", error);
-    alert("An error occurred during sign in");
+    alert(`An error occurred during sign in: ${error.message || "Unknown error"}`);
   }
 };
 
