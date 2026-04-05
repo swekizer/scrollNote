@@ -1,6 +1,7 @@
 let shadowHost = null;
 let shadowRoot = null;
 let saveButton = null;
+const SCREENSHOT_TIMEOUT_MS = 8000;
 
 // Map to store active note sessions by ID to prevent race conditions
 const activeSessions = new Map();
@@ -103,10 +104,32 @@ function captureNote() {
     data: noteData,
     div: null,
     isSaving: false,
+    screenshotTimeoutId: null,
   });
 
   // Always show the note input immediately
   showNoteInput(sessionId, noteData, true); // true = waiting for screenshot
+
+  const session = activeSessions.get(sessionId);
+  if (session) {
+    session.screenshotTimeoutId = setTimeout(() => {
+      const currentSession = activeSessions.get(sessionId);
+      if (!currentSession) return;
+
+      currentSession.data.screenshot = null;
+      currentSession.data.screenshotError = true;
+      showNoteInput(sessionId, currentSession.data, false);
+
+      const statusMsg = currentSession.div?.querySelector(
+        "#scrollnote-status-msg",
+      );
+      if (statusMsg) {
+        statusMsg.textContent =
+          "Screenshot capture timed out. You can still save without it.";
+        statusMsg.style.color = "#f59e0b";
+      }
+    }, SCREENSHOT_TIMEOUT_MS);
+  }
 
   // Remove save button after capture starts
   if (saveButton) {
@@ -155,6 +178,12 @@ function showNoteInput(sessionId, noteData, waitingForScreenshot = false) {
 
   // If dialog already exists for this session, just update it
   if (session.div) {
+    session.data = { ...session.data, ...noteData };
+    if (session.screenshotTimeoutId && !waitingForScreenshot) {
+      clearTimeout(session.screenshotTimeoutId);
+      session.screenshotTimeoutId = null;
+    }
+
     const statusBanner = session.div.querySelector(
       ".scrollnote-capture-status",
     );
@@ -296,6 +325,9 @@ function handleNoteSaveResult(sessionId, success, error, warning) {
 function closeSession(sessionId) {
   const session = activeSessions.get(sessionId);
   if (session) {
+    if (session.screenshotTimeoutId) {
+      clearTimeout(session.screenshotTimeoutId);
+    }
     activeSessions.delete(sessionId);
   }
 }

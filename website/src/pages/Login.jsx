@@ -1,14 +1,13 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Lock, Mail, ArrowRight, Loader2, Check, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
-import { Lock, Mail, ArrowRight, Loader2, Check, X } from "lucide-react";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const passwordRequirements = useMemo(
@@ -19,7 +18,7 @@ export default function Login() {
       { label: "One number", test: (p) => /\d/.test(p) },
       {
         label: "One special character",
-        test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p),
+        test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(p),
       },
     ],
     [],
@@ -31,7 +30,7 @@ export default function Login() {
       label: req.label,
       met: req.test(password),
     }));
-  }, [password, passwordRequirements, isLogin]);
+  }, [isLogin, password, passwordRequirements]);
 
   const isPasswordValid = passwordChecks.every((check) => check.met);
 
@@ -41,7 +40,6 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     if (!isLogin && !isPasswordValid) {
       toast("Password does not meet all requirements", "warning");
@@ -58,9 +56,9 @@ export default function Login() {
       if (result.success) {
         navigate("/dashboard");
       } else {
-        setError(result.message);
+        toast(result.message, "error");
       }
-    } catch (err) {
+    } catch (_err) {
       toast("An unexpected error occurred. Please try again.", "error");
     } finally {
       setLoading(false);
@@ -69,7 +67,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Decorative Orbs */}
       <div className="absolute top-10 left-10 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl -z-10 mix-blend-multiply"></div>
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl -z-10 mix-blend-multiply"></div>
 
@@ -122,7 +119,7 @@ export default function Login() {
                 type="password"
                 required
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-900"
-                placeholder="••••••••"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -132,7 +129,9 @@ export default function Login() {
                 {passwordChecks.map((check) => (
                   <li
                     key={check.label}
-                    className={`flex items-center gap-2 transition-colors ${check.met ? "text-emerald-600" : "text-slate-400"}`}
+                    className={`flex items-center gap-2 transition-colors ${
+                      check.met ? "text-emerald-600" : "text-slate-400"
+                    }`}
                   >
                     {check.met ? (
                       <Check className="w-3.5 h-3.5 shrink-0" />

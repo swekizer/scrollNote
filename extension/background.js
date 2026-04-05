@@ -41,7 +41,6 @@ async function uploadScreenshotToBackend(base64Data, userEmail, userToken) {
     body: JSON.stringify({
       fileData: base64Data,
       fileName: fileName,
-      userEmail: userEmail,
     }),
   });
 
@@ -141,6 +140,7 @@ async function saveToBackend(data, sender, explicitTabId, sessionId) {
       } catch (uploadErr) {
         console.error("Screenshot upload failed:", uploadErr);
         warningMsg =
+          uploadErr.message ||
           "Screenshot upload failed. The note was saved without screenshot.";
         data.screenshot = null;
       }
@@ -178,14 +178,25 @@ async function saveToBackend(data, sender, explicitTabId, sessionId) {
           if (retryResponse.ok) {
             console.log("Note saved successfully after token refresh");
             success = true;
-            return;
+          } else {
+            let retryErrorText = "";
+            try {
+              const retryErrorBody = await retryResponse.json();
+              retryErrorText =
+                retryErrorBody.message || JSON.stringify(retryErrorBody);
+            } catch (_unused) {
+              retryErrorText = await retryResponse.text();
+            }
+            errorMsg = "Failed to save note: " + retryErrorText;
           }
         }
       }
-      chrome.storage.local.remove(["user"]);
-      throw new Error(
-        "Session expired. Please click the scrollNote icon and sign in again.",
-      );
+      if (!success) {
+        chrome.storage.local.remove(["user"]);
+        throw new Error(
+          "Session expired. Please click the scrollNote icon and sign in again.",
+        );
+      }
     }
 
     if (response.ok) {

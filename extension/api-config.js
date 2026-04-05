@@ -12,7 +12,7 @@
 const DEFAULT_CONFIG = {
   development: {
     apiUrl: "http://localhost:5000",
-    websiteUrl: "http://localhost:3000",
+    websiteUrl: "http://localhost:5173",
   },
   production: {
     apiUrl: "https://scrollnote-backend.onrender.com",
@@ -23,6 +23,7 @@ const DEFAULT_CONFIG = {
 // Auto-detect environment: unpacked extensions lack an update_url
 const isDevelopment = !("update_url" in chrome.runtime.getManifest());
 const SCROLLNOTE_ENV = isDevelopment ? "development" : "production";
+const SHOW_DEV_SETTINGS = false;
 
 // Initialize with defaults synchronously so scripts don't crash if they don't await
 let API_URL = DEFAULT_CONFIG[SCROLLNOTE_ENV].apiUrl;
@@ -48,6 +49,7 @@ globalThis.SCROLLNOTE_CONFIG_READY = (async () => {
 
 // Expose current env
 globalThis.SCROLLNOTE_ENV = SCROLLNOTE_ENV;
+globalThis.SCROLLNOTE_SHOW_SETTINGS = SHOW_DEV_SETTINGS;
 
 // Settings management helpers for UI
 globalThis.scrollNoteSettings = {

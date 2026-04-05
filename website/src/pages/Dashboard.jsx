@@ -19,11 +19,32 @@ export default function Dashboard() {
   const { user, logout, refreshToken } = useAuth();
   const toast = useToast();
 
+  const getScreenshotUrl = useCallback((screenshot) => {
+    if (!screenshot || typeof screenshot !== "string") return null;
+    if (screenshot.startsWith("data:image/")) return screenshot;
+
+    try {
+      const parsed = new URL(screenshot);
+      const publicPrefix = "/storage/v1/object/public/";
+
+      if (parsed.pathname.includes(publicPrefix)) {
+        const suffix = parsed.pathname.split(publicPrefix)[1];
+        if (suffix && !suffix.startsWith("screenshots/")) {
+          parsed.pathname = `${publicPrefix}screenshots/${suffix}`;
+          return parsed.toString();
+        }
+      }
+
+      return parsed.toString();
+    } catch (_err) {
+      return screenshot;
+    }
+  }, []);
+
   // State
   const [activeView, setActiveView] = useState("all"); // 'all' or tagId
   const [snaps, setSnaps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -35,10 +56,11 @@ export default function Dashboard() {
   const [showCreateTag, setShowCreateTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [creatingTag, setCreatingTag] = useState(false);
+  const [deletingSnapId, setDeletingSnapId] = useState(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
   // tagError removed - using toast notifications instead
   const [snapTags, setSnapTags] = useState({}); // { snapId: [tag objects] }
   const [showTagPicker, setShowTagPicker] = useState(null); // snapId or null
-  const [selectedTagIds, setSelectedTagIds] = useState(new Set());
 
   // Fetch tags
   const fetchWithRefresh = useCallback(
@@ -80,7 +102,7 @@ export default function Dashboard() {
       console.error("Failed to fetch tags:", err);
       toast("Failed to load tags. Please try again.", "error");
     }
-  }, [user.token, fetchWithRefresh]);
+  }, [fetchWithRefresh, toast, user.token]);
 
   // Fetch snaps
   const fetchSnaps = useCallback(
@@ -111,9 +133,10 @@ export default function Dashboard() {
           } else {
             setSnaps(newSnaps);
           }
-          setHasMore(
-            newSnaps.length >= 20 && snaps.length + newSnaps.length < total,
-          );
+          const loadedCount = append
+            ? (pageNum - 1) * 20 + newSnaps.length
+            : newSnaps.length;
+          setHasMore(loadedCount < total);
         }
       } catch (err) {
         console.error("Failed to fetch notes:", err);
@@ -122,7 +145,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     },
-    [activeView, user.token, fetchWithRefresh],
+    [activeView, fetchWithRefresh, toast, user.token],
   );
 
   // Fetch tags for a specific snap
@@ -145,12 +168,6 @@ export default function Dashboard() {
     },
     [user.token, fetchWithRefresh],
   );
-
-  const retryFetch = useCallback(() => {
-    setLoading(true);
-    fetchSnaps(1, false, debouncedSearch);
-    fetchTags();
-  }, [fetchSnaps, fetchTags, debouncedSearch]);
 
   // Debounce search input
   useEffect(() => {
@@ -206,13 +223,19 @@ export default function Dashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        setTags((prev) => [...prev, data]);
+        const createdTag = Array.isArray(data) ? data[0] : data;
+        if (createdTag?.id) {
+          setTags((prev) => [...prev, createdTag]);
+        } else {
+          await fetchTags();
+        }
         setNewTagName("");
         setShowCreateTag(false);
       } else {
         toast(data.message || "Failed to create tag", "error");
       }
     } catch (err) {
+      console.error("Failed to create tag:", err);
       toast("An error occurred while creating the tag", "error");
     } finally {
       setCreatingTag(false);
@@ -261,6 +284,50 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error("Failed to toggle tag:", err);
+    }
+  };
+
+  const handleDeleteSnap = async (snapId) => {
+    if (!confirm("Delete this note? This action cannot be undone.")) return;
+
+    setDeletingSnapId(snapId);
+
+    try {
+      const response = await fetchWithRefresh(`${API_BASE_URL}/snaps/${snapId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Failed to delete note";
+        try {
+          const data = await response.json();
+          errorMessage = data.message || errorMessage;
+        } catch (_err) {
+          // Keep the fallback message.
+        }
+        toast(errorMessage, "error");
+        return;
+      }
+
+      setSnaps((prev) => prev.filter((snap) => snap.id !== snapId));
+      setSnapTags((prev) => {
+        const next = { ...prev };
+        delete next[snapId];
+        return next;
+      });
+      setSelectedNote((prev) => (prev?.id === snapId ? null : prev));
+      setShowTagPicker((prev) => (prev === snapId ? null : prev));
+      setPreviewImageUrl((prev) =>
+        selectedNote?.id === snapId ? null : prev,
+      );
+      setTotalCount((prev) => Math.max(0, prev - 1));
+      toast("Note deleted", "success");
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+      toast("Failed to delete note", "error");
+    } finally {
+      setDeletingSnapId(null);
     }
   };
 
@@ -464,7 +531,7 @@ export default function Dashboard() {
                         <div className="h-44 bg-gray-100 relative overflow-hidden shrink-0 border-b border-gray-100">
                           {snap.screenshot ? (
                             <img
-                              src={snap.screenshot}
+                              src={getScreenshotUrl(snap.screenshot)}
                               alt="Capture"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -522,31 +589,47 @@ export default function Dashboard() {
           <div className="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-2xl z-40 flex flex-col transform transition-transform duration-300 translate-x-0 border-l border-gray-200">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="font-bold text-lg text-gray-800">Note Details</h2>
-              <button
-                onClick={() => {
-                  setSelectedNote(null);
-                  setShowTagPicker(null);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDeleteSnap(selectedNote.id)}
+                  disabled={deletingSnapId === selectedNote.id}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {deletingSnapId === selectedNote.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedNote(null);
+                    setShowTagPicker(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-auto">
               {selectedNote.screenshot && (
                 <div className="w-full bg-gray-100 border-b border-gray-100">
-                  <a
-                    href={selectedNote.screenshot}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewImageUrl(getScreenshotUrl(selectedNote.screenshot))
+                    }
+                    className="block w-full cursor-zoom-in"
                   >
                     <img
-                      src={selectedNote.screenshot}
+                      src={getScreenshotUrl(selectedNote.screenshot)}
                       alt="Full Screenshot"
                       className="w-full object-contain max-h-[30vh]"
                     />
-                  </a>
+                  </button>
                 </div>
               )}
 
@@ -660,6 +743,32 @@ export default function Dashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-6"
+          onClick={() => setPreviewImageUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImageUrl(null)}
+            className="absolute top-4 right-4 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            aria-label="Close image preview"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div
+            className="relative max-w-6xl max-h-full w-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImageUrl}
+              alt="Captured screenshot preview"
+              className="max-w-full max-h-[88vh] object-contain rounded-2xl shadow-2xl bg-white"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

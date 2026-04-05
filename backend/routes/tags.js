@@ -62,7 +62,7 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    res.status(201).json(result);
+    res.status(201).json(Array.isArray(result) ? result[0] : result);
   } catch (error) {
     console.error("Error creating tag:", error);
     res.status(500).json({

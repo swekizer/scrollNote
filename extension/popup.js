@@ -101,6 +101,15 @@ function showUserSection(email) {
 
 // Wait for config to load before initializing UI
 window.SCROLLNOTE_CONFIG_READY.then(async () => {
+  const showSettings = window.SCROLLNOTE_SHOW_SETTINGS === true;
+  const settingsToggle = document.getElementById("settingsToggle");
+  const settingsSection = document.getElementById("settingsSection");
+
+  if (!showSettings) {
+    if (settingsToggle) settingsToggle.style.display = "none";
+    if (settingsSection) settingsSection.style.display = "none";
+  }
+
   // Initialize settings inputs with current/custom values
   const custom = await window.scrollNoteSettings.getCustom();
   const apiUrlInput = document.getElementById("apiUrlInput");
@@ -109,27 +118,32 @@ window.SCROLLNOTE_CONFIG_READY.then(async () => {
   if (websiteUrlInput) websiteUrlInput.value = custom.customWebsiteUrl || "";
 
   // Settings toggle
-  document.getElementById("settingsToggle").onclick = function () {
-    const section = document.getElementById("settingsSection");
-    section.classList.toggle("visible");
-  };
+  if (showSettings && settingsToggle) {
+    settingsToggle.onclick = function () {
+      settingsSection.classList.toggle("visible");
+    };
+  }
 
   // Save settings
-  document.getElementById("saveSettings").onclick = async function () {
-    const apiUrl = document.getElementById("apiUrlInput").value.trim();
-    const websiteUrl = document.getElementById("websiteUrlInput").value.trim();
-    await window.scrollNoteSettings.setApiUrl(apiUrl || null);
-    await window.scrollNoteSettings.setWebsiteUrl(websiteUrl || null);
-    alert("Settings saved! The extension will use these URLs now.");
-  };
+  if (showSettings) {
+    document.getElementById("saveSettings").onclick = async function () {
+      const apiUrl = document.getElementById("apiUrlInput").value.trim();
+      const websiteUrl = document.getElementById("websiteUrlInput").value.trim();
+      await window.scrollNoteSettings.setApiUrl(apiUrl || null);
+      await window.scrollNoteSettings.setWebsiteUrl(websiteUrl || null);
+      alert("Settings saved! The extension will use these URLs now.");
+    };
+  }
 
   // Reset settings
-  document.getElementById("resetSettings").onclick = async function () {
-    await window.scrollNoteSettings.reset();
-    document.getElementById("apiUrlInput").value = "";
-    document.getElementById("websiteUrlInput").value = "";
-    alert("Settings reset to defaults.");
-  };
+  if (showSettings) {
+    document.getElementById("resetSettings").onclick = async function () {
+      await window.scrollNoteSettings.reset();
+      document.getElementById("apiUrlInput").value = "";
+      document.getElementById("websiteUrlInput").value = "";
+      alert("Settings reset to defaults.");
+    };
+  }
 
   // Check user auth
   chrome.storage.local.get(["user"], async function (result) {

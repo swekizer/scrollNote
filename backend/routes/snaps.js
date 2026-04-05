@@ -163,6 +163,45 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 /**
+ * @route DELETE /api/snaps/:id
+ * @desc Delete a snap owned by the authenticated user
+ * @access Private
+ */
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const snapId = parseInt(req.params.id, 10);
+
+    if (isNaN(snapId)) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid snap ID",
+      });
+    }
+
+    const deleted = await snapsService.deleteSnap(snapId, req.user.email, token);
+
+    if (!deleted) {
+      return res.status(404).json({
+        error: true,
+        message: "Snap not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Snap deleted",
+    });
+  } catch (error) {
+    console.error("Error deleting snap:", error);
+    res.status(500).json({
+      error: true,
+      message: "Failed to delete snap",
+    });
+  }
+});
+
+/**
  * @route GET /api/snaps/:id/tags
  * @desc Get all tags assigned to a specific snap
  * @access Private

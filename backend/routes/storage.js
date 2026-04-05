@@ -27,12 +27,13 @@ router.get('/', (req, res) => {
 router.post('/upload', authMiddleware, async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
-    const { fileData, fileName, userEmail } = req.body;
+    const { fileData, fileName } = req.body;
+    const userEmail = req.user?.email;
     
     if (!userEmail) {
-      return res.status(401).json({ 
-        error: true, 
-        message: 'Authentication required' 
+      return res.status(401).json({
+        error: true,
+        message: 'Authenticated user email not found',
       });
     }
     
@@ -68,9 +69,13 @@ router.post('/upload', authMiddleware, async (req, res) => {
     res.json({ fileUrl });
   } catch (error) {
     console.error('Error uploading file:', error);
-    res.status(500).json({ 
-      error: true, 
-      message: 'Failed to upload file' 
+    res.status(500).json({
+      error: true,
+      message: 'Failed to upload file',
+      details:
+        process.env.NODE_ENV === 'production'
+          ? undefined
+          : error.message,
     });
   }
 });
