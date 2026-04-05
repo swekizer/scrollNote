@@ -12,6 +12,17 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   process.exit(1);
 }
 
+function buildSearchClause(search) {
+  const trimmed = search.trim();
+  if (!trimmed) return "";
+
+  const escaped = trimmed.replace(/[%_,()]/g, "\\$&");
+  const pattern = `*${escaped}*`;
+  return `&or=(${["text", "url", "title"]
+    .map((field) => `${field}.ilike.${encodeURIComponent(pattern)}`)
+    .join(",")})`;
+}
+
 /**
  * Authentication service for Supabase
  */
@@ -102,10 +113,7 @@ export const snapsService = {
 
     let url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc&limit=${limitNum}&offset=${offset}`;
 
-    if (search.trim()) {
-      const searchQuery = `ilike.%25${encodeURIComponent(search.trim())}%25`;
-      url += `&or=(text${searchQuery},url${searchQuery},title${searchQuery})`;
-    }
+    url += buildSearchClause(search);
 
     console.log("Supabase query URL:", url);
 
@@ -359,10 +367,7 @@ export const tagsService = {
 
     let url = `${SUPABASE_URL}/rest/v1/snaps?select=*,snap_tags!inner(tag_id)&user_email=eq.${encodeURIComponent(userEmail)}&snap_tags.tag_id=eq.${tagId}&order=created_at.desc&limit=${limitNum}&offset=${offset}`;
 
-    if (search.trim()) {
-      const searchQuery = `ilike.%25${encodeURIComponent(search.trim())}%25`;
-      url += `&or=(text${searchQuery},url${searchQuery},title${searchQuery})`;
-    }
+    url += buildSearchClause(search);
 
     const response = await fetch(url, {
       headers: {
