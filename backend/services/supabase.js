@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -7,7 +7,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase configuration. Please check your .env file.');
+  console.error("Missing Supabase configuration. Please check your .env file.");
   process.exit(1);
 }
 
@@ -22,19 +22,22 @@ export const authService = {
    * @returns {Promise<Object>} - Authentication response
    */
   async signIn(email, password) {
-    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, password }),
       },
-      body: JSON.stringify({ email, password })
-    });
-    
+    );
+
     return response.json();
   },
-  
+
   /**
    * Sign up a new user
    * @param {string} email - User email
@@ -43,17 +46,39 @@ export const authService = {
    */
   async signUp(email, password) {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
     });
-    
+
     return response.json();
-  }
+  },
+
+  /**
+   * Refresh an access token using a refresh token
+   * @param {string} refreshToken - The refresh token
+   * @returns {Promise<Object>} - Authentication response with new tokens
+   */
+  async refreshToken(refreshToken) {
+    const response = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      },
+    );
+
+    return response.json();
+  },
 };
 
 /**
@@ -68,30 +93,43 @@ export const snapsService = {
    * @param {number} [limit=20] - Number of items per page
    * @returns {Promise<Array>} - Array of snaps
    */
-  async getSnaps(userEmail, token, page = 1, limit = 20) {
+  async getSnaps(userEmail, token, page = 1, limit = 20, search = "") {
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20)); // Max 100 items per request
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
     const offset = (pageNum - 1) * limitNum;
     const end = offset + limitNum - 1;
 
-    const url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc&limit=${limitNum}&offset=${offset}`;
-    console.log('Supabase query URL:', url);
-    
+    let url = `${SUPABASE_URL}/rest/v1/snaps?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc&limit=${limitNum}&offset=${offset}`;
+
+    if (search.trim()) {
+      const searchQuery = `ilike.%25${encodeURIComponent(search.trim())}%25`;
+      url += `&or=(text${searchQuery},url${searchQuery},title${searchQuery})`;
+    }
+
+    console.log("Supabase query URL:", url);
+
     const response = await fetch(url, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Range': `${offset}-${end}` // Supabase expects a Range header for pagination
-      }
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        Range: `${offset}-${end}`,
+        Prefer: "count=exact",
+      },
     });
-    
-    console.log('Supabase response status:', response.status);
+
+    console.log("Supabase response status:", response.status);
     const data = await response.json();
-    console.log('Supabase response data:', data);
-    
-    return data;
+    console.log("Supabase response data:", data);
+
+    // Extract total count from Content-Range header (format: "0-19/123" or "*/123")
+    const contentRange = response.headers.get("content-range");
+    const totalCount = contentRange
+      ? parseInt(contentRange.split("/")[1], 10)
+      : null;
+
+    return { data, totalCount };
   },
-  
+
   /**
    * Create a new snap
    * @param {Object} snapData - Snap data
@@ -99,25 +137,25 @@ export const snapsService = {
    * @returns {Promise<Object>} - Created snap
    */
   async createSnap(snapData, token) {
-    console.log('Creating snap with data:', snapData);
-    
+    console.log("Creating snap with data:", snapData);
+
     const response = await fetch(`${SUPABASE_URL}/rest/v1/snaps`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Prefer': 'return=representation'
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        Prefer: "return=representation",
       },
-      body: JSON.stringify(snapData)
+      body: JSON.stringify(snapData),
     });
-    
-    console.log('Snap creation response status:', response.status);
+
+    console.log("Snap creation response status:", response.status);
     const data = await response.json();
-    console.log('Snap creation response data:', data);
-    
+    console.log("Snap creation response data:", data);
+
     return data;
-  }
+  },
 };
 
 /**
@@ -134,30 +172,164 @@ export const storageService = {
    */
   async uploadFile(fileBuffer, fileName, userEmail, token) {
     // Sanitize inputs to prevent path traversal
-    const safeEmail = String(userEmail).replace(/[^a-zA-Z0-9@._-]/g, '');
-    const safeFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, '');
-    
+    const safeEmail = String(userEmail).replace(/[^a-zA-Z0-9@._-]/g, "");
+    const safeFileName = String(fileName).replace(/[^a-zA-Z0-9._-]/g, "");
+
     if (!safeEmail || !safeFileName) {
-      throw new Error('Invalid user email or file name');
+      throw new Error("Invalid user email or file name");
     }
 
     const path = `screenshots/${safeEmail}/${safeFileName}`;
-    
+
     const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${path}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/octet-stream'
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/octet-stream",
       },
-      body: fileBuffer
+      body: fileBuffer,
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to upload file: ${errorText}`);
     }
-    
+
     return `${SUPABASE_URL}/storage/v1/object/public/${path}`;
-  }
+  },
+};
+
+/**
+ * Tags service for Supabase
+ */
+export const tagsService = {
+  /**
+   * Get all tags for a user
+   */
+  async getTags(userEmail, token) {
+    const url = `${SUPABASE_URL}/rest/v1/tags?user_email=eq.${encodeURIComponent(userEmail)}&order=created_at.desc`;
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  },
+
+  /**
+   * Create a new tag
+   */
+  async createTag(tagData, token) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/tags`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(tagData),
+    });
+    return response.json();
+  },
+
+  /**
+   * Delete a tag
+   */
+  async deleteTag(tagId, token) {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/tags?id=eq.${tagId}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return response.ok;
+  },
+
+  /**
+   * Assign a tag to a snap
+   */
+  async assignTagToSnap(snapId, tagId, token) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/snap_tags`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({ snap_id: snapId, tag_id: tagId }),
+    });
+    return response.json();
+  },
+
+  /**
+   * Remove a tag from a snap
+   */
+  async removeTagFromSnap(snapId, tagId, token) {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/snap_tags?snap_id=eq.${snapId}&tag_id=eq.${tagId}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return response.ok;
+  },
+
+  /**
+   * Get snaps for a specific tag
+   */
+  async getSnapsByTag(
+    tagId,
+    userEmail,
+    token,
+    page = 1,
+    limit = 20,
+    search = "",
+  ) {
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const offset = (pageNum - 1) * limitNum;
+    const end = offset + limitNum - 1;
+
+    let url = `${SUPABASE_URL}/rest/v1/snaps?select=*,snap_tags(tag_id)&snap_tags.tag_id=eq.${tagId}&order=created_at.desc`;
+
+    if (search.trim()) {
+      const searchQuery = `ilike.%25${encodeURIComponent(search.trim())}%25`;
+      url += `&or=(text${searchQuery},url${searchQuery},title${searchQuery})`;
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+        Range: `${offset}-${end}`,
+      },
+    });
+    return response.json();
+  },
+
+  /**
+   * Get all tags assigned to a specific snap
+   */
+  async getTagsForSnap(snapId, token) {
+    const url = `${SUPABASE_URL}/rest/v1/tags?select=*&snap_tags.snap_id=eq.${snapId}`;
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  },
 };

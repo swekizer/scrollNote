@@ -1,5 +1,10 @@
-import express from 'express';
-import { authService } from '../services/supabase.js';
+import express from "express";
+import { authService } from "../services/supabase.js";
+import {
+  validatePassword,
+  getPasswordRequirements,
+} from "../utils/passwordValidator.js";
+import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -8,13 +13,10 @@ const router = express.Router();
  * @desc Root route for auth API
  * @access Public
  */
-router.get('/', (req, res) => {
+router.get("/", (req, res) => {
   res.status(200).json({
-    message: 'Auth API',
-    endpoints: [
-      '/signin - User authentication',
-      '/signup - User registration'
-    ]
+    message: "Auth API",
+    endpoints: ["/signin - User authentication", "/signup - User registration"],
   });
 });
 
@@ -23,11 +25,12 @@ router.get('/', (req, res) => {
  * @desc Provide information about the signin endpoint
  * @access Public
  */
-router.get('/signin', (req, res) => {
+router.get("/signin", (req, res) => {
   res.status(200).json({
-    message: 'Authentication endpoint',
-    usage: 'Send a POST request to this endpoint with email and password in the request body',
-    required_fields: ['email', 'password']
+    message: "Authentication endpoint",
+    usage:
+      "Send a POST request to this endpoint with email and password in the request body",
+    required_fields: ["email", "password"],
   });
 });
 
@@ -36,12 +39,12 @@ router.get('/signin', (req, res) => {
  * @desc Handle preflight requests for signin
  * @access Public
  */
-router.options('/signin', (req, res) => {
+router.options("/signin", (req, res) => {
   // Set CORS headers specifically for this endpoint
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
   res.status(204).end();
 });
 
@@ -50,37 +53,38 @@ router.options('/signin', (req, res) => {
  * @desc Sign in a user
  * @access Public
  */
-router.post('/signin', async (req, res) => {
+router.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: true, 
-        message: 'Email and password are required' 
+      return res.status(400).json({
+        error: true,
+        message: "Email and password are required",
       });
     }
-    
+
     const data = await authService.signIn(email, password);
-    
+
     if (data.error) {
-      return res.status(401).json({ 
-        error: true, 
-        message: data.error_description || 'Authentication failed' 
+      return res.status(401).json({
+        error: true,
+        message: data.error_description || "Authentication failed",
       });
     }
-    
+
     res.json({
       user: {
         email,
-        token: data.access_token
-      }
+        token: data.access_token,
+        refresh_token: data.refresh_token,
+      },
     });
   } catch (error) {
-    console.error('Sign in error:', error);
-    res.status(500).json({ 
-      error: true, 
-      message: 'An error occurred during sign in' 
+    console.error("Sign in error:", error);
+    res.status(500).json({
+      error: true,
+      message: "An error occurred during sign in",
     });
   }
 });
@@ -90,11 +94,12 @@ router.post('/signin', async (req, res) => {
  * @desc Provide information about the signup endpoint
  * @access Public
  */
-router.get('/signup', (req, res) => {
+router.get("/signup", (req, res) => {
   res.status(200).json({
-    message: 'Registration endpoint',
-    usage: 'Send a POST request to this endpoint with email and password in the request body',
-    required_fields: ['email', 'password']
+    message: "Registration endpoint",
+    usage:
+      "Send a POST request to this endpoint with email and password in the request body",
+    required_fields: ["email", "password"],
   });
 });
 
@@ -103,12 +108,12 @@ router.get('/signup', (req, res) => {
  * @desc Handle preflight requests for signup
  * @access Public
  */
-router.options('/signup', (req, res) => {
+router.options("/signup", (req, res) => {
   // Set CORS headers specifically for this endpoint
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header("Access-Control-Allow-Origin", req.headers.origin);
+  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
   res.status(204).end();
 });
 
@@ -117,35 +122,87 @@ router.options('/signup', (req, res) => {
  * @desc Register a new user
  * @access Public
  */
-router.post('/signup', async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: true, 
-        message: 'Email and password are required' 
+      return res.status(400).json({
+        error: true,
+        message: "Email and password are required",
       });
     }
-    
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        error: true,
+        message: "Password does not meet requirements",
+        requirements: getPasswordRequirements(),
+        errors: passwordValidation.errors,
+      });
+    }
+
     const data = await authService.signUp(email, password);
-    
+
     if (data.error) {
-      return res.status(400).json({ 
-        error: true, 
-        message: data.msg || 'Registration failed' 
+      return res.status(400).json({
+        error: true,
+        message: data.msg || "Registration failed",
       });
     }
-    
+
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please check your email for confirmation.'
+      message:
+        "Registration successful. Please check your email for confirmation.",
     });
   } catch (error) {
-    console.error('Sign up error:', error);
-    res.status(500).json({ 
-      error: true, 
-      message: 'An error occurred during registration' 
+    console.error("Sign up error:", error);
+    res.status(500).json({
+      error: true,
+      message: "An error occurred during registration",
+    });
+  }
+});
+
+/**
+ * @route POST /api/auth/refresh
+ * @desc Refresh an expired access token using a refresh token
+ * @access Public
+ */
+router.post("/refresh", async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+      return res.status(400).json({
+        error: true,
+        message: "Refresh token is required",
+      });
+    }
+
+    const data = await authService.refreshToken(refresh_token);
+
+    if (data.error) {
+      return res.status(401).json({
+        error: true,
+        message: data.error_description || "Invalid or expired refresh token",
+      });
+    }
+
+    res.json({
+      user: {
+        token: data.access_token,
+        refresh_token: data.refresh_token,
+      },
+    });
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    res.status(500).json({
+      error: true,
+      message: "An error occurred during token refresh",
     });
   }
 });

@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { API_BASE_URL } from '../config';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 
 const AuthContext = createContext(null);
 
@@ -9,13 +9,13 @@ export function AuthProvider({ children }) {
 
   // Check local storage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('scrollNote_user');
+    const storedUser = localStorage.getItem("scrollNote_user");
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error("Failed to parse stored user", e);
-        localStorage.removeItem('scrollNote_user');
+        localStorage.removeItem("scrollNote_user");
       }
     }
     setLoading(false);
@@ -23,46 +23,72 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/signin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
-    
+
     const data = await response.json();
     if (response.ok && !data.error) {
       setUser(data.user);
-      localStorage.setItem('scrollNote_user', JSON.stringify(data.user));
+      localStorage.setItem("scrollNote_user", JSON.stringify(data.user));
       return { success: true };
     }
-    return { success: false, message: data.message || 'Login failed' };
+    return { success: false, message: data.message || "Login failed" };
+  };
+
+  const refreshToken = async () => {
+    const storedUser = localStorage.getItem("scrollNote_user");
+    if (!storedUser) return false;
+    try {
+      const user = JSON.parse(storedUser);
+      if (!user.refresh_token) return false;
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: user.refresh_token }),
+      });
+      const data = await response.json();
+      if (response.ok && data.user) {
+        const updatedUser = { ...user, ...data.user };
+        setUser(updatedUser);
+        localStorage.setItem("scrollNote_user", JSON.stringify(updatedUser));
+        return true;
+      }
+    } catch (e) {
+      console.error("Token refresh failed:", e);
+    }
+    return false;
   };
 
   const register = async (email, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
-    
+
     // Some APIs might auto-login or just return plain success. Assuming it behaves like signin or returns data
     const data = await response.json();
     if (response.ok && !data.error) {
       if (data.user) {
         setUser(data.user);
-        localStorage.setItem('scrollNote_user', JSON.stringify(data.user));
+        localStorage.setItem("scrollNote_user", JSON.stringify(data.user));
       }
       return { success: true };
     }
-    return { success: false, message: data.message || 'Registration failed' };
+    return { success: false, message: data.message || "Registration failed" };
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('scrollNote_user');
+    localStorage.removeItem("scrollNote_user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refreshToken }}
+    >
       {children}
     </AuthContext.Provider>
   );

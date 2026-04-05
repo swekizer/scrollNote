@@ -1,80 +1,167 @@
 .scrollnote-save-btn {
-    background: #ffffff;
-    color: #000000;
+    background: #111827;
+    color: #ffffff;
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.2s ease;
-  }
-  
-  .scrollnote-save-btn:hover {
-    background: #f0f0f0;
-  }
-  
-  .scrollnote-input {
-    background: #1a1a1a;
-    border: 1px solid #333333;
-    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.scrollnote-save-btn:hover {
+    background: #1f2937;
+}
+
+.scrollnote-input {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    padding: 16px;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #ffffff;
-  }
-  
-  .scrollnote-input textarea {
-    width: 280px;
-    height: 100px;
-    border: 1px solid #333333;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #111827;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: scrollnote-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scrollnote-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.scrollnote-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.scrollnote-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.scrollnote-capture-status {
+    font-size: 12px;
+}
+
+.scrollnote-selected-text-preview {
+    font-size: 13px;
+    color: #4b5563;
+    background: #f3f4f6;
+    padding: 10px;
+    border-radius: 8px;
+    border-left: 3px solid #3b82f6; /* Modern blue */
+    max-height: 80px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.scrollnote-input textarea {
+    width: 100%;
+    height: 80px;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
     padding: 12px;
     resize: none;
-    background: #2a2a2a;
-    color: #ffffff;
-    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 8px;
     font-family: inherit;
-    font-size: 14px;
-  }
-  
-  .scrollnote-input textarea:focus {
+    font-size: 13px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.scrollnote-input textarea:focus {
     outline: none;
-    border-color: #555555;
-    background: #333333;
-  }
-  
-  .scrollnote-input textarea::placeholder {
-    color: #888888;
-  }
-  
-  .scrollnote-input button {
-    margin: 8px 4px;
-    padding: 10px 20px;
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.scrollnote-input textarea::placeholder {
+    color: #9ca3af;
+}
+
+.scrollnote-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.scrollnote-input button {
+    padding: 8px 16px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s ease;
-  }
-  
-  .scrollnote-input button:first-of-type {
-    background: #ffffff;
-    color: #000000;
-  }
-  
-  .scrollnote-input button:first-of-type:hover {
-    background: #f0f0f0;
-  }
-  
-  .scrollnote-input button:last-of-type {
+}
+
+.scrollnote-input button#scrollnote-cancel-btn {
     background: transparent;
-    color: #888888;
-    border: 1px solid #333333;
-  }
-  
-  .scrollnote-input button:last-of-type:hover {
-    background: #2a2a2a;
+    color: #4b5563;
+}
+
+.scrollnote-input button#scrollnote-cancel-btn:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.scrollnote-primary-btn {
+    background: #111827;
     color: #ffffff;
-    border-color: #555555;
-  }
+}
+
+.scrollnote-primary-btn:hover {
+    background: #1f2937;
+}
+
+#scrollnote-status-msg {
+    font-size: 12px;
+    text-align: right;
+}
+
+/* Loading spinner animation for save button */
+@keyframes scrollnote-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.scrollnote-btn-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    cursor: wait !important;
+}
+
+.scrollnote-btn-loading::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    margin-top: -7px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: scrollnote-spin 0.6s linear infinite;
+}
